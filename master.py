@@ -60,7 +60,9 @@ def alert_waste(info, alert_record):
                     '进程CPU使用率：%d%%' % pi['cpu_percent'],
                 ]
                 print('向<%s>发送警报：\n\t%s' % (pi['wechatname'], '\n\t'.join(alerting)))
-                friend = itchat.search_friends(nickName = pi['wechatname'])
+                friend = itchat.search_friends(remarkName = pi['wechatname'])
+                print(pi['wechatname'])
+                print(friend)
                 if len(friend) == 0:
                     print('不存在微信好友：<%s>' % pi['wechatname'])
                     continue
