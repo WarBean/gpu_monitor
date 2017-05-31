@@ -13,13 +13,13 @@ pip install requests
 
 3. 选择一个服务器作为master服务器，运行
 
-```python
+```shell
 python master.py --address <主服务器IP地址>
 ```
 
 4. 在多个GPU服务器上运行
 
-```python
+```shell
 python slaver.py --address <主服务器IP地址>
 ```
 
