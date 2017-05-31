@@ -8,7 +8,7 @@ from http.server import HTTPServer
 from http.server import BaseHTTPRequestHandler
 
 class CustomHandler(BaseHTTPRequestHandler):
-    inform_record = { }
+    alert_record = { }
 
     def do_GET(self):
         length = int(self.headers['content-length'])
@@ -17,7 +17,7 @@ class CustomHandler(BaseHTTPRequestHandler):
         lock.acquire()
         info_record[slaver_address] = info
         lock.release()
-        inform_waste(info, self.inform_record)
+        alert_waste(info, self.alert_record)
         self.send_response(200)
         self.end_headers()
 
@@ -29,30 +29,26 @@ def http_func():
     print("监听服务开启，按<Ctrl-C>退出")
     server.serve_forever()
 
-def inform_condition(mem_usage, gpu_percent, cpu_percent, wechatname, pid, inform_record):
-    if mem_usage < 1000: return False
-    if cpu_percent > 5 and gpu_percent > 5: return False
+def alert_condition(mem_usage, gpu_percent, cpu_percent, wechatname, pid, alert_record):
+    if mem_usage < opt.mem_usage_threshold: return False
+    if cpu_percent > opt.cpu_percent_threshold and gpu_percent > opt.gpu_percent_threshold: return False
     curr_time = time.time()
-    if (wechatname, pid) not in inform_record:
-        inform_record[(wechatname, pid)] = curr_time
+    if (wechatname, pid) not in alert_record:
+        alert_record[(wechatname, pid)] = curr_time
         return True
-    if curr_time - inform_record[(wechatname, pid)] > 30:
-        inform_record[(wechatname, pid)] = curr_time
+    if curr_time - alert_record[(wechatname, pid)] > 30:
+        alert_record[(wechatname, pid)] = curr_time
         return True
     return False
 
-def inform_waste(info, inform_record):
+def alert_waste(info, alert_record):
     for slaver_address in sorted(info_record.keys()):
         gi_list = info_record[slaver_address]['gpu']
         pi_list = info_record[slaver_address]['process']
         for pi in pi_list:
             gi = gi_list[pi['gpuid']]
-            if inform_condition(pi['mem_usage'], gi['percent'], pi['cpu_percent'], pi['wechatname'], pi['pid'], inform_record):
-                friend = itchat.search_friends(nickName = pi['wechatname'])
-                if len(friend) == 0:
-                    print('不存在微信好友：<%s>' % pi['wechatname'])
-                    continue
-                information = [
+            if alert_condition(pi['mem_usage'], gi['percent'], pi['cpu_percent'], pi['wechatname'], pi['pid'], alert_record):
+                alerting = [
                     '检测到程序长时间高内存消耗且低负载空转：',
                     '所在服务器：%s' % slaver_address,
                     'GPU id：%d' % pi['gpuid'],
@@ -63,8 +59,12 @@ def inform_waste(info, inform_record):
                     '所在GPU使用率：%d%%' % gi['percent'],
                     '进程CPU使用率：%d%%' % pi['cpu_percent'],
                 ]
-                friend[0].send('\n'.join(information))
-                print('向<%s>发送通知：\n\t%s' % (pi['wechatname'], '\n\t'.join(information)))
+                print('向<%s>发送警报：\n\t%s' % (pi['wechatname'], '\n\t'.join(alerting)))
+                friend = itchat.search_friends(nickName = pi['wechatname'])
+                if len(friend) == 0:
+                    print('不存在微信好友：<%s>' % pi['wechatname'])
+                    continue
+                friend[0].send('\n'.join(alerting))
 
 def report_server():
     report = ['服务器列表：']
@@ -119,7 +119,10 @@ def report_user():
 parser = argparse.ArgumentParser()
 parser.add_argument('--address', required = True, help = 'master服务器IP地址')
 parser.add_argument('--port', type = int, default = '5678', help = 'master服务器端口，默认5678')
-parser.add_argument('--interval', type = int, default = '1800', help = '通知间隔时间，默认1800秒')
+parser.add_argument('--interval', type = int, default = '1800', help = '警报间隔时间，默认1800秒')
+parser.add_argument('--mem_usage_threshold', type = int, default = '1000', help = '警报功能GPU内存阈值')
+parser.add_argument('--gpu_percent_threshold', type = int, default = '10', help = '警报功能GPU使用率阈值')
+parser.add_argument('--cpu_percent_threshold', type = int, default = '10', help = '警报功能CPU使用率阈值')
 opt = parser.parse_args()
 
 info_record = { }

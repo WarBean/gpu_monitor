@@ -41,7 +41,7 @@ def get_info():
         gpuid, pid, program, mem_usage = status[0]
         username = get_owner(int(pid))
         if username is None:
-            print('进程已经不存在1')
+            print('进程已经不存在')
             continue
         wechatname = name_dict.get(username, username)
         try:
@@ -50,7 +50,7 @@ def get_info():
             time.sleep(0.5)
             cpu_percent = p.cpu_percent()
         except psutil.NoSuchProcess:
-            print('进程已经不存在2')
+            print('进程已经不存在')
             continue
         info['process'].append({
             'gpuid': int(gpuid),
