@@ -8,6 +8,7 @@
 
 ```shell
 pip install itchat
+pip install psutil
 pip install requests
 ```
 

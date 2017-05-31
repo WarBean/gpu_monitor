@@ -36,7 +36,7 @@ def alert_condition(mem_usage, gpu_percent, cpu_percent, wechatname, pid, alert_
     if (wechatname, pid) not in alert_record:
         alert_record[(wechatname, pid)] = curr_time
         return True
-    if curr_time - alert_record[(wechatname, pid)] > 30:
+    if curr_time - alert_record[(wechatname, pid)] > opt.interval:
         alert_record[(wechatname, pid)] = curr_time
         return True
     return False
