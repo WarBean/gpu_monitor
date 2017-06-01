@@ -30,6 +30,8 @@ def http_func():
     server.serve_forever()
 
 def alert_condition(mem_usage, gpu_percent, cpu_percent, wechatname, pid, alert_record):
+    curr_hour = int(time.strftime('%H'))
+    if curr_hour < opt.beg_hour or curr_hour >= opt.end_hour: return False
     if mem_usage < opt.mem_usage_threshold: return False
     if cpu_percent > opt.cpu_percent_threshold and gpu_percent > opt.gpu_percent_threshold: return False
     curr_time = time.time()
@@ -61,8 +63,6 @@ def alert_waste(info, alert_record):
                 ]
                 print('向<%s>发送警报：\n\t%s' % (pi['wechatname'], '\n\t'.join(alerting)))
                 friend = itchat.search_friends(remarkName = pi['wechatname'])
-                print(pi['wechatname'])
-                print(friend)
                 if len(friend) == 0:
                     print('不存在微信好友：<%s>' % pi['wechatname'])
                     continue
@@ -125,6 +125,8 @@ parser.add_argument('--interval', type = int, default = '1800', help = '警报�
 parser.add_argument('--mem_usage_threshold', type = int, default = '1000', help = '警报功能GPU内存阈值')
 parser.add_argument('--gpu_percent_threshold', type = int, default = '10', help = '警报功能GPU使用率阈值')
 parser.add_argument('--cpu_percent_threshold', type = int, default = '10', help = '警报功能CPU使用率阈值')
+parser.add_argument('--beg_hour', type = int, default = '9', help = '警报功能在几点开启')
+parser.add_argument('--end_hour', type = int, default = '17', help = '警报功能在几点关闭')
 opt = parser.parse_args()
 
 info_record = { }
